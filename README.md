@@ -1,19 +1,9 @@
-| Supported Targets | ESP32 |
-| ----------------- | ----- |
 
-ESP-IDF BT-SPP-ACCEPTOR demo
+Sprocket Firmware
 ======================
 
-Demo of SPP acceptor role
+Reads data sequentially from HX711 modules and transmits over bluetooth. 
 
-This is the demo for user to use ESP_APIs to create a SPP acceptor.
+FreeRTOS: Data task on core1, BT transfer occurs on core0 (task started within esp_bt.c)
 
-Options choose step:
-1. `idf.py menuconfig`
-2. enter menuconfig `Component config`, choose `Bluetooth`
-3. enter menu Bluetooth, choose `Classic Bluetooth" and "SPP Profile`
-4. choose your options.
-
-Then set `SPP_SHOW_MODE` as `SPP_SHOW_DATA` or `SPP_SHOW_SPEED` in code(should be same with bt_spp_initator).
-
-After the program started, bt_spp_initator will connect it and send data.
+Further data processing upstream. 
