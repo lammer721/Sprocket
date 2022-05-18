@@ -1,0 +1,258 @@
+5-16-22
+------------------
+cody@The721:~/esp/i2c_self_test$ /home/cody/.espressif/python_env/idf4.3_py3.6_env/bin/python /home/cody/esp/esp-idf/tools/idf.py -p /dev/ttyUSB0 monitor
+Executing action: monitor
+Running idf_monitor in directory /home/cody/esp/i2c_self_test
+Executing "/home/cody/.espressif/python_env/idf4.3_py3.6_env/bin/python /home/cody/esp/esp-idf/tools/idf_monitor.py -p /dev/ttyUSB0 -b 115200 --toolchain-prefix xtensa-esp32-elf- /home/cody/esp/i2c_self_test/build/i2c-example.elf -m '/home/cody/.espressif/python_env/idf4.3_py3.6_env/bin/python' '/home/cody/esp/esp-idf/tools/idf.py' '-p' '/dev/ttyUSB0'"...
+--- idf_monitor on /dev/ttyUSB0 115200 ---
+--- Quit: Ctrl+] | Menu: Ctrl+T | Help: Ctrl+T followed by Ctrl+H ---
+ets Jun  8 2016 00:22:57
+
+rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0030,len:4
+load:0x3fff0034,len:6936
+load:0x40078000,len:14332
+load:0x40080400,len:3664
+0x40080400: _init at ??:?
+
+entry 0x40080678
+I (28) boot: ESP-IDF v4.3-dev-2349-g39cbf2f7e-dirty 2nd stage bootloader
+I (29) boot: compile time 10:12:59
+I (30) boot: chip revision: 1
+I (33) boot_comm: chip revision: 1, min. bootloader chip revision: 0
+I (41) boot.esp32: SPI Speed      : 40MHz
+I (45) boot.esp32: SPI Mode       : DIO
+I (50) boot.esp32: SPI Flash Size : 16MB
+I (54) boot: Enabling RNG early entropy source...
+I (60) boot: Partition Table:
+I (63) boot: ## Label            Usage          Type ST Offset   Length
+I (71) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (78) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (85) boot:  2 factory          factory app      00 00 00010000 00100000
+I (93) boot: End of partition table
+I (97) boot_comm: chip revision: 1, min. application chip revision: 0
+I (104) esp_image: segment 0: paddr=00010020 vaddr=3f400020 size=18ec8h (102088) map
+I (152) esp_image: segment 1: paddr=00028ef0 vaddr=3ffbdb60 size=03b38h ( 15160) load
+I (158) esp_image: segment 2: paddr=0002ca30 vaddr=40080000 size=00404h (  1028) load
+I (159) esp_image: segment 3: paddr=0002ce3c vaddr=40080404 size=031dch ( 12764) load
+I (172) esp_image: segment 4: paddr=00030020 vaddr=400d0020 size=65c20h (416800) map
+I (333) esp_image: segment 5: paddr=00095c48 vaddr=400835e0 size=12ef4h ( 77556) load
+I (380) boot: Loaded app from partition at offset 0x10000
+I (380) boot: Disabling RNG early entropy source...
+I (391) cpu_start: Pro cpu up.
+I (391) cpu_start: Starting app cpu, entry point is 0x400811a4
+0x400811a4: call_start_cpu0 at /home/cody/esp/esp-idf/components/esp_system/port/cpu_start.c:516
+
+I (0) cpu_start: App cpu up.
+I (408) cpu_start: Pro cpu start user code
+I (408) cpu_start: cpu freq: 160000000
+I (408) cpu_start: Application information:
+I (412) cpu_start: Project name:     bt_spp_acceptor_demo
+I (418) cpu_start: App version:      6a9c406-dirty
+I (424) cpu_start: Compile time:     May 16 2022 10:12:51
+I (430) cpu_start: ELF file SHA256:  44795323a099acf7...
+I (436) cpu_start: ESP-IDF:          v4.3-dev-2349-g39cbf2f7e-dirty
+I (443) heap_init: Initializing. RAM available for dynamic allocation:
+I (450) heap_init: At 3FFAFF10 len 000000F0 (0 KiB): DRAM
+I (456) heap_init: At 3FFB6388 len 00001C78 (7 KiB): DRAM
+I (462) heap_init: At 3FFB9A20 len 00004108 (16 KiB): DRAM
+I (468) heap_init: At 3FFC72F8 len 00018D08 (99 KiB): DRAM
+I (475) heap_init: At 3FFE0440 len 00003AE0 (14 KiB): D/IRAM
+I (481) heap_init: At 3FFE4350 len 0001BCB0 (111 KiB): D/IRAM
+I (487) heap_init: At 400964D4 len 00009B2C (38 KiB): IRAM
+I (495) spi_flash: detected chip: generic
+I (498) spi_flash: flash io: dio
+I (504) cpu_start: Starting scheduler on PRO CPU.
+I (0) cpu_start: Starting scheduler on APP CPU.
+I (513) SPP_ACCEPTOR_DEMO: void app_main(void) - Start
+I (1533) BTDM_INIT: BT controller compile version [b62cb38]
+I (1533) system_api: Base MAC address is not set
+I (1533) system_api: read default base MAC address from EFUSE
+I (1543) SPP_ACCEPTOR_DEMO: Initialize controller ok
+I (1553) phy_init: phy_version 4660,0162888,Dec 23 2020
+I (2123) SPP_ACCEPTOR_DEMO: Enable controller ok
+I (2133) SPP_ACCEPTOR_DEMO: Initialize bluedroid ok
+I (2193) SPP_ACCEPTOR_DEMO: Enable bluedroid ok
+I (2203) SPP_ACCEPTOR_DEMO: Gap register ok
+I (2203) SPP_ACCEPTOR_DEMO: spp register ok
+I (2203) SPP_ACCEPTOR_DEMO: ESP_SPP_INIT_EVT
+I (2223) SPP_ACCEPTOR_DEMO: event: 10
+I (2223) SPP_ACCEPTOR_DEMO: ESP_SPP_START_EVT
+I (2223) SPP_ACCEPTOR_DEMO: spp init ok
+I (2223) SPP_ACCEPTOR_DEMO: CONFIG_BT_SSP_ENABLED == true
+I (2233) SPP_ACCEPTOR_DEMO: Set default parameters for Secure Simple Pairing
+I (2243) SPP_ACCEPTOR_DEMO: void app_main(void) - End
+
+I (2253) SPP_ACCEPTOR_DEMO: Error Status Sensor 1: 0 (ESP_OK)
+
+I (2313) SPP_ACCEPTOR_DEMO: Error Status Sensor 2: 0 (ESP_OK)
+
+I (2333) SPP_ACCEPTOR_DEMO: Error Status Sensor 3: 0 (ESP_OK)
+
+I (2353) SPP_ACCEPTOR_DEMO: Error Status Sensor 4: 0 (ESP_OK)
+
+I (2373) SPP_ACCEPTOR_DEMO: Error Status Sensor 5: 0 (ESP_OK)
+
+I (2593) SPP_ACCEPTOR_DEMO: Error Status Sensor 6: 263 (ESP_ERR_TIMEOUT)
+
+I (2603) SPP_ACCEPTOR_DEMO: i = 1
+I (2603) SPP_ACCEPTOR_DEMO:  2090
+I (3193) SPP_ACCEPTOR_DEMO: Device #6 not found: 263 (ESP_ERR_TIMEOUT)
+
+I (3283) SPP_ACCEPTOR_DEMO: Message Size: 43
+
+I (3283) SPP_ACCEPTOR_DEMO: Line Size: 0
+
+I (3283) SPP_ACCEPTOR_DEMO: i = 2
+I (3283) SPP_ACCEPTOR_DEMO:  2770
+I (3793) SPP_ACCEPTOR_DEMO: Device #6 not found: 263 (ESP_ERR_TIMEOUT)
+
+I (3883) SPP_ACCEPTOR_DEMO: Message Size: 86
+
+I (3883) SPP_ACCEPTOR_DEMO: Line Size: 0
+
+I (3883) SPP_ACCEPTOR_DEMO: i = 3
+I (3883) SPP_ACCEPTOR_DEMO:  3370
+I (4393) SPP_ACCEPTOR_DEMO: Device #6 not found: 263 (ESP_ERR_TIMEOUT)
+
+I (4483) SPP_ACCEPTOR_DEMO: Message Size: 129
+
+I (4483) SPP_ACCEPTOR_DEMO: Line Size: 0
+
+I (4483) SPP_ACCEPTOR_DEMO: i = 4
+I (4483) SPP_ACCEPTOR_DEMO:  3970
+I (4993) SPP_ACCEPTOR_DEMO: Device #6 not found: 263 (ESP_ERR_TIMEOUT)
+
+I (5083) SPP_ACCEPTOR_DEMO: Message Size: 172
+
+I (5083) SPP_ACCEPTOR_DEMO: Line Size: 0
+
+I (5083) SPP_ACCEPTOR_DEMO: i = 5
+I (5083) SPP_ACCEPTOR_DEMO:  4570
+I (5593) SPP_ACCEPTOR_DEMO: Device #6 not found: 263 (ESP_ERR_TIMEOUT)
+
+I (5593) SPP_ACCEPTOR_DEMO: Stack Remaining Size: 1752
+
+I (5593) SPP_ACCEPTOR_DEMO: i = 0
+I (5593) SPP_ACCEPTOR_DEMO: Message: 2090, -8388608, 420427, -139104, 0, -1, -1
+2770, -8388608, 420362, -139048, 0, -1, -1
+3370, -8388608, 420423, -138969, 0, -1, -1
+3970, -8388608, 420429, -139044, 0, -1, -1
+4570, -8388608, 420362, -139084, 0, -1, -1
+
+I (5713) SPP_ACCEPTOR_DEMO: Message Size: 0
+
+I (5713) SPP_ACCEPTOR_DEMO: Line Size: 0
+
+I (5713) SPP_ACCEPTOR_DEMO: i = 1
+I (5713) SPP_ACCEPTOR_DEMO:  5200
+I (6223) SPP_ACCEPTOR_DEMO: Device #6 not found: 263 (ESP_ERR_TIMEOUT)
+
+I (6313) SPP_ACCEPTOR_DEMO: Message Size: 43
+
+I (6313) SPP_ACCEPTOR_DEMO: Line Size: 0
+
+I (6313) SPP_ACCEPTOR_DEMO: i = 2
+I (6313) SPP_ACCEPTOR_DEMO:  5800
+I (6823) SPP_ACCEPTOR_DEMO: Device #6 not found: 263 (ESP_ERR_TIMEOUT)
+
+I (6913) SPP_ACCEPTOR_DEMO: Message Size: 86
+
+I (6913) SPP_ACCEPTOR_DEMO: Line Size: 0
+
+I (6913) SPP_ACCEPTOR_DEMO: i = 3
+I (6913) SPP_ACCEPTOR_DEMO:  6400
+I (7423) SPP_ACCEPTOR_DEMO: Device #6 not found: 263 (ESP_ERR_TIMEOUT)
+
+I (7513) SPP_ACCEPTOR_DEMO: Message Size: 129
+
+I (7513) SPP_ACCEPTOR_DEMO: Line Size: 0
+
+I (7513) SPP_ACCEPTOR_DEMO: i = 4
+I (7513) SPP_ACCEPTOR_DEMO:  7000
+I (8023) SPP_ACCEPTOR_DEMO: Device #6 not found: 263 (ESP_ERR_TIMEOUT)
+
+I (8113) SPP_ACCEPTOR_DEMO: Message Size: 172
+
+I (8113) SPP_ACCEPTOR_DEMO: Line Size: 0
+
+I (8113) SPP_ACCEPTOR_DEMO: i = 5
+I (8113) SPP_ACCEPTOR_DEMO:  7600
+I (8623) SPP_ACCEPTOR_DEMO: Device #6 not found: 263 (ESP_ERR_TIMEOUT)
+
+I (8623) SPP_ACCEPTOR_DEMO: Stack Remaining Size: 1688
+
+I (8623) SPP_ACCEPTOR_DEMO: i = 0
+I (8623) SPP_ACCEPTOR_DEMO: Message: 5200, -8388608, 420376, -138923, 0, -1, -1
+5800, -8388608, 420416, -138930, 0, -1, -1
+6400, -8388608, 395394, -167586, 0, -1, -1
+7000, -8388608, 398830, -160380, 0, -1, -1
+7600, -8388608, 386975, -172880, 0, -1, -1
+
+I (8733) SPP_ACCEPTOR_DEMO: Message Size: 0
+
+I (8733) SPP_ACCEPTOR_DEMO: Line Size: 0
+
+I (8733) SPP_ACCEPTOR_DEMO: i = 1
+I (8733) SPP_ACCEPTOR_DEMO:  8220
+I (9243) SPP_ACCEPTOR_DEMO: Device #6 not found: 263 (ESP_ERR_TIMEOUT)
+
+I (9333) SPP_ACCEPTOR_DEMO: Message Size: 43
+
+I (9333) SPP_ACCEPTOR_DEMO: Line Size: 0
+
+I (9333) SPP_ACCEPTOR_DEMO: i = 2
+I (9333) SPP_ACCEPTOR_DEMO:  8820
+I (9843) SPP_ACCEPTOR_DEMO: Device #6 not found: 263 (ESP_ERR_TIMEOUT)
+
+I (9933) SPP_ACCEPTOR_DEMO: Message Size: 86
+
+I (9933) SPP_ACCEPTOR_DEMO: Line Size: 0
+
+I (9933) SPP_ACCEPTOR_DEMO: i = 3
+I (9933) SPP_ACCEPTOR_DEMO:  9420
+I (10443) SPP_ACCEPTOR_DEMO: Device #6 not found: 263 (ESP_ERR_TIMEOUT)
+
+I (10533) SPP_ACCEPTOR_DEMO: Message Size: 129
+
+I (10533) SPP_ACCEPTOR_DEMO: Line Size: 0
+
+I (10533) SPP_ACCEPTOR_DEMO: i = 4
+I (10533) SPP_ACCEPTOR_DEMO:  10020
+I (11043) SPP_ACCEPTOR_DEMO: Device #6 not found: 263 (ESP_ERR_TIMEOUT)
+
+I (11133) SPP_ACCEPTOR_DEMO: Message Size: 173
+
+I (11133) SPP_ACCEPTOR_DEMO: Line Size: 0
+
+I (11133) SPP_ACCEPTOR_DEMO: i = 5
+I (11133) SPP_ACCEPTOR_DEMO:  10620
+I (11643) SPP_ACCEPTOR_DEMO: Device #6 not found: 263 (ESP_ERR_TIMEOUT)
+
+I (11643) SPP_ACCEPTOR_DEMO: Stack Remaining Size: 1688
+
+I (11643) SPP_ACCEPTOR_DEMO: i = 0
+I (11643) SPP_ACCEPTOR_DEMO: Message: 8220, -8388608, 395570, -162174, 0, -1, -1
+8820, -8388608, 384708, -176648, 0, -1, -1
+9420, -8388608, 385423, -172158, 0, -1, -1
+10020, -8388608, 388696, -169249, 0, -1, -1
+10620, -8388608, 394621, -166153, 0, -1, -1
+
+I (11763) SPP_ACCEPTOR_DEMO: Message Size: 0
+
+I (11763) SPP_ACCEPTOR_DEMO: Line Size: 0
+
+I (11763) SPP_ACCEPTOR_DEMO: i = 1
+I (11763) SPP_ACCEPTOR_DEMO:  11250
+I (12273) SPP_ACCEPTOR_DEMO: Device #6 not found: 263 (ESP_ERR_TIMEOUT)
+
+I (12363) SPP_ACCEPTOR_DEMO: Message Size: 44
+
+I (12363) SPP_ACCEPTOR_DEMO: Line Size: 0
+
+I (12363) SPP_ACCEPTOR_DEMO: i = 2
+I (12363) SPP_ACCEPTOR_DEMO:  11850
+-------------------------------------------------------------------------------------------------------------

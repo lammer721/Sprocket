@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdbool.h>
-#include <stdio.h>
 //#include "nvs.h"
 #include "nvs_flash.h"
 #include "esp_log.h"
@@ -12,6 +11,11 @@
 #include "esp_spp_api.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
+#include <stdio.h>
+#include "esp_log.h"
+#include "driver/i2c.h"
+#include "sdkconfig.h"
+#include <math.h>
 
 #include <hx711.h>
 #include <esp_timer.h>
@@ -26,19 +30,26 @@
 #define MESSAGE_LINES 5
 #define MESSAGE_LENGTH LINE_LENGTH*MESSAGE_LINES
 
-#define DOUT_GPIO1   21
-#define PD_SCK_GPIO1 22
-#define DOUT_GPIO2   23
-#define PD_SCK_GPIO2 19
-#define DOUT_GPIO3   18
-#define PD_SCK_GPIO3  2
-//#define DOUT_GPIO4   5
-//#define PD_SCK_GPIO4 15
-#define DOUT_GPIO5   27
-#define PD_SCK_GPIO5 4
-#define DOUT_GPIO6   17
-#define PD_SCK_GPIO6 16
+#define DOUT_GPIO1   18
+#define PD_SCK_GPIO1 19
+#define DOUT_GPIO2   5
+#define PD_SCK_GPIO2 17
+#define DOUT_GPIO3   16
+#define PD_SCK_GPIO3 4
+#define DOUT_GPIO4   33
+#define PD_SCK_GPIO4 25
+#define DOUT_GPIO5   26
+#define PD_SCK_GPIO5 27
+#define DOUT_GPIO6   14
+#define PD_SCK_GPIO6 12
  
+#define PIN_SDA 21
+#define PIN_CLK 22
+#define I2C_ADDRESS 0x69 // I2C address of MPU6050
+#define MPU6050_ACCEL_XOUT_H 0x3B
+#define MPU6050_PWR_MGMT_1   0x6B
+static char tag[] = "mpu6050"; //9250?
+
 static bool bWriteAfterOpenEvt = true;
 static bool bWriteAfterWriteEvt = false;
 static bool bWriteAfterSvrOpenEvt = true;
@@ -309,7 +320,7 @@ void transmit_task(void * params){
     hx711_t dev1 = {
         .dout = DOUT_GPIO1,
         .pd_sck = PD_SCK_GPIO1,
-        .gain = HX711_GAIN_A_64
+        .gain = HX711_GAIN_A_64  //change to 128
     };
 
     hx711_t dev2 = {
@@ -321,6 +332,12 @@ void transmit_task(void * params){
     hx711_t dev3 = {
         .dout = DOUT_GPIO3,
         .pd_sck = PD_SCK_GPIO3,
+        .gain = HX711_GAIN_A_64
+    };
+
+    hx711_t dev4 = {
+        .dout = DOUT_GPIO4,
+        .pd_sck = PD_SCK_GPIO4,
         .gain = HX711_GAIN_A_64
     };
 
@@ -336,14 +353,43 @@ void transmit_task(void * params){
         .gain = HX711_GAIN_A_64
     };
 
-    int a = 0;
-    int b = 0;
-    int z = 0;
-    int x = 0;
-    int y = 0;
-    int i = 0;
+    int a = 0, b = 0, c = 0, z = 0, x = 0, y = 0, i = 0;
     
+    uint8_t IMUdata[20];
 
+	short accel_x;
+	short accel_y;
+	short accel_z;
+
+	short temperature;
+
+	short gyro_x;
+	short gyro_y;
+	short gyro_z;
+
+    i2c_cmd_handle_t cmd;  //container for a command sequence 
+	
+	vTaskDelay(200/portTICK_PERIOD_MS); //not sure why the delay here
+
+	cmd = i2c_cmd_link_create(); //creates/initializes i2c commands list. 
+	ESP_ERROR_CHECK(i2c_master_start(cmd));    // ADD START BIT TO CONTAINER
+	ESP_ERROR_CHECK(i2c_master_write_byte(cmd, (I2C_ADDRESS << 1) | I2C_MASTER_WRITE, 1)); //ADD THE DEVICE ADDRESS FOLLOWED BY WRITE BIT (0) AND DEMAND ACK
+	 
+	i2c_master_write_byte(cmd, MPU6050_ACCEL_XOUT_H, 1); //ADD THE REGISTER ADDRESS W/ ACK
+	ESP_ERROR_CHECK(i2c_master_stop(cmd)); //ADD THE STOP SIGNAL. FYI THIS SENDS SDA HIGH DURING A HIGH CLK PULSE
+	ESP_ERROR_CHECK(i2c_master_cmd_begin(I2C_NUM_0, cmd, 1000/portTICK_PERIOD_MS)); //SEND THE COMMANDS, BLOCKS UNTIL ALL ARE SENT - "I2C APIS ARE NOT THREAD-SAFE"?.... ALSO SHOULD ERROR_CHECK THIS
+	i2c_cmd_link_delete(cmd); //FREE THE CMD LISTS. NEEDS TO HAPPEN, REQUIRED BYTES DYNAMICALLY ALLOCATED
+
+	cmd = i2c_cmd_link_create(); 
+	ESP_ERROR_CHECK(i2c_master_start(cmd));
+	ESP_ERROR_CHECK(i2c_master_write_byte(cmd, (I2C_ADDRESS << 1) | I2C_MASTER_WRITE, 1));
+	i2c_master_write_byte(cmd, MPU6050_PWR_MGMT_1, 1); //AGAIN, SET REGISTER ADDRESS W/ ACK
+	i2c_master_write_byte(cmd, 0, 1);  //SET THIS ADDRESS TO 0?
+	ESP_ERROR_CHECK(i2c_master_stop(cmd));
+	i2c_master_cmd_begin(I2C_NUM_0, cmd, 1000/portTICK_PERIOD_MS);
+	i2c_cmd_link_delete(cmd);
+
+    //init HX711 devices - break when confirmed
     while (1)
     {
         esp_err_t r1 = hx711_init(&dev1);
@@ -363,6 +409,12 @@ void transmit_task(void * params){
             z = 1;
         ESP_LOGI(SPP_TAG, "Error Status Sensor 3: %d (%s)\n", r3, esp_err_to_name(r3));
         vTaskDelay(10 / portTICK_PERIOD_MS);
+        
+        esp_err_t r4 = hx711_init(&dev4);
+        if (r4 == ESP_OK)
+            c = 1;
+        ESP_LOGI(SPP_TAG, "Error Status Sensor 4: %d (%s)\n", r4, esp_err_to_name(r4));
+        vTaskDelay(10 / portTICK_PERIOD_MS);
 
         esp_err_t r5 = hx711_init(&dev5);
         if (r5 == ESP_OK)
@@ -376,13 +428,14 @@ void transmit_task(void * params){
         ESP_LOGI(SPP_TAG, "Error Status Sensor 6: %d (%s)\n", r6, esp_err_to_name(r6));
         vTaskDelay(10 / portTICK_PERIOD_MS);
 
-        a = a + b + z + x + y;
+        a = a + b + c + z + x + y; //Kinda dumb but quick way to make sure all are initialized
 
-        if (a == 5){
+        if (a == 6){ //Break if all are good - otherwise try again
             break;
         }
         a = 0;
         b = 0;
+        c = 0;
         z = 0;
         x = 0;
         y = 0;
@@ -394,9 +447,8 @@ void transmit_task(void * params){
         i = i + 1; 
         int32_t data1;
         int32_t time;
-        char c[LINE_LENGTH];   //whole line buffer string. expected format  "time (10 = 1s), sensor1 (16 bit int), sens2, sens3" 
-        char buf[12];
-        // ind'l reading buffer string
+        char c[LINE_LENGTH];   //whole line buffer string. expected format  "time (10 = 1s), sensor1 (24 bit int), sens2, sens3..." 
+        char buf[12];          //  buffer string for ind'l reading 
         ESP_LOGI(SPP_TAG, "i = %d", i);
 
         TickType_t time_start = xTaskGetTickCount();
@@ -420,7 +472,8 @@ void transmit_task(void * params){
             ESP_LOGI(SPP_TAG, "Could not read data: %d (%s)\n", r1, esp_err_to_name(r1));
         }
 
-        sprintf(buf, "%d", data1);  //assign data1 to buffer string
+        //should probably make this a function
+        sprintf(buf, "%d", data1);  //assign data1 to buffer string 
         strcat(c, buf);      //append buf to c
         buf[0] = '\0';          // clear buffer for next reading (in case it's less digits)
         strcat(c, ", ");        // append comma
@@ -431,7 +484,7 @@ void transmit_task(void * params){
         esp_err_t r2 = hx711_wait(&dev2, 500);
         if (r2 != ESP_OK)
         {
-            ESP_LOGI(SPP_TAG, "Device #1 not found: %d (%s)\n", r2, esp_err_to_name(r2));
+            ESP_LOGI(SPP_TAG, "Device #2 not found: %d (%s)\n", r2, esp_err_to_name(r2));
         }
         vTaskDelay(1 / portTICK_PERIOD_MS);
 
@@ -452,7 +505,7 @@ void transmit_task(void * params){
         esp_err_t r3 = hx711_wait(&dev3, 500);
         if (r3 != ESP_OK)
         {
-            ESP_LOGI(SPP_TAG, "Device #1 not found: %d (%s)\n", r3, esp_err_to_name(r3));
+            ESP_LOGI(SPP_TAG, "Device #3 not found: %d (%s)\n", r3, esp_err_to_name(r3));
         }
 
         vTaskDelay(1 / portTICK_PERIOD_MS);
@@ -469,12 +522,34 @@ void transmit_task(void * params){
         strcat(c, ", ");
 
         vTaskDelay(1 / portTICK_PERIOD_MS);
+
+        //SENSOR 4
+        esp_err_t r4 = hx711_wait(&dev4, 500);
+        if (r4 != ESP_OK)
+        {
+            ESP_LOGI(SPP_TAG, "Device #4 not found: %d (%s)\n", r4, esp_err_to_name(r4));
+        }
+
+        vTaskDelay(1 / portTICK_PERIOD_MS);
+
+        r4 = hx711_read_data(&dev4, &data1);
+        if (r4 != ESP_OK)
+        {
+            ESP_LOGI(SPP_TAG, "Could not read data: %d (%s)\n", r4, esp_err_to_name(r4));
+        }
+
+        sprintf(buf, "%d", data1);
+        strcat(c, buf);
+        buf[0] = '\0';
+        strcat(c, ", ");
+
+        vTaskDelay(1 / portTICK_PERIOD_MS);
         
         //SENSOR 5
         esp_err_t r5 = hx711_wait(&dev5, 500);
         if (r5 != ESP_OK)
         {
-            ESP_LOGI(SPP_TAG, "Device #1 not found: %d (%s)\n", r5, esp_err_to_name(r5));
+            ESP_LOGI(SPP_TAG, "Device #5 not found: %d (%s)\n", r5, esp_err_to_name(r5));
         }
 
         vTaskDelay(1 / portTICK_PERIOD_MS);
@@ -496,7 +571,7 @@ void transmit_task(void * params){
         esp_err_t r6 = hx711_wait(&dev6, 500);
         if (r6 != ESP_OK)
         {
-            ESP_LOGI(SPP_TAG, "Device #1 not found: %d (%s)\n", r6, esp_err_to_name(r6));
+            ESP_LOGI(SPP_TAG, "Device #6 not found: %d (%s)\n", r6, esp_err_to_name(r6));
         }
 
         vTaskDelay(1 / portTICK_PERIOD_MS);
@@ -510,6 +585,91 @@ void transmit_task(void * params){
         sprintf(buf, "%d", data1);
         strcat(c, buf);
         buf[0] = '\0';
+        strcat(c, ",");
+
+        cmd = i2c_cmd_link_create();
+		ESP_ERROR_CHECK(i2c_master_start(cmd));
+		ESP_ERROR_CHECK(i2c_master_write_byte(cmd, (I2C_ADDRESS << 1) | I2C_MASTER_WRITE, 1));
+		ESP_ERROR_CHECK(i2c_master_write_byte(cmd, MPU6050_ACCEL_XOUT_H, 1));
+		ESP_ERROR_CHECK(i2c_master_stop(cmd));
+		ESP_ERROR_CHECK(i2c_master_cmd_begin(I2C_NUM_0, cmd, 1000/portTICK_PERIOD_MS));
+		i2c_cmd_link_delete(cmd);
+
+		cmd = i2c_cmd_link_create();
+		ESP_ERROR_CHECK(i2c_master_start(cmd));
+		ESP_ERROR_CHECK(i2c_master_write_byte(cmd, (I2C_ADDRESS << 1) | I2C_MASTER_READ, 1));
+
+        //why isn't this a loop too?
+		ESP_ERROR_CHECK(i2c_master_read_byte(cmd, IMUdata,   0)); //accel responds to 'burst' or sequential reads. This one is ACCEL_XOUT_H 0X3B (59)
+		ESP_ERROR_CHECK(i2c_master_read_byte(cmd, IMUdata+1, 0)); //read next register... and so on. This one is ACCEL_XOUT_L (60)
+		ESP_ERROR_CHECK(i2c_master_read_byte(cmd, IMUdata+2, 0)); //ACCEL_YOUT_H (61)
+		ESP_ERROR_CHECK(i2c_master_read_byte(cmd, IMUdata+3, 0)); // ACCEL_YOUT_L (62)
+		ESP_ERROR_CHECK(i2c_master_read_byte(cmd, IMUdata+4, 0)); //ACCEL_ZOUT_H (63)
+		ESP_ERROR_CHECK(i2c_master_read_byte(cmd, IMUdata+5, 0)); //ACCEL_ZOUT_L (64)
+		ESP_ERROR_CHECK(i2c_master_read_byte(cmd, IMUdata+6, 0)); //TEMP_OUT_H (pre-formula) (65)
+		ESP_ERROR_CHECK(i2c_master_read_byte(cmd, IMUdata+7, 0)); //TEMP_OUT_L (66)
+		ESP_ERROR_CHECK(i2c_master_read_byte(cmd, IMUdata+8, 0)); //GYRO_XOUT_H (67)
+		ESP_ERROR_CHECK(i2c_master_read_byte(cmd, IMUdata+9, 0)); //GYRO_XOUT_l (68)
+		ESP_ERROR_CHECK(i2c_master_read_byte(cmd, IMUdata+10, 0)); //GYRO_YOUT_H (69)
+		ESP_ERROR_CHECK(i2c_master_read_byte(cmd, IMUdata+11, 0)); //GYRO_YOUT_L (70)
+		ESP_ERROR_CHECK(i2c_master_read_byte(cmd, IMUdata+12, 0)); //GYRO_ZOUT_H (71)
+		ESP_ERROR_CHECK(i2c_master_read_byte(cmd, IMUdata+13, 1)); //GYRO_ZOUT_L (72)
+		
+		//i2c_master_read(cmd, data, sizeof(data), 1);
+		ESP_ERROR_CHECK(i2c_master_stop(cmd));
+		ESP_ERROR_CHECK(i2c_master_cmd_begin(I2C_NUM_0, cmd, 1000/portTICK_PERIOD_MS));
+		i2c_cmd_link_delete(cmd);
+
+        //INSEAD OF ACCEL_X, ETC. just loop over IMUData[] 
+        //OR JUST MAKE A FUNCTION THAT ACCEPTS DATA AND APPENDS TO C
+
+		accel_x = (IMUdata[0] << 8) | IMUdata[1];
+
+        sprintf(buf, "%d", accel_x);
+        strcat(c, buf);
+        buf[0] = '\0';
+        strcat(c, ",");
+
+		accel_y = (IMUdata[2] << 8) | IMUdata[3];
+
+        sprintf(buf, "%d", accel_y);
+        strcat(c, buf);
+        buf[0] = '\0';
+        strcat(c, ",");
+
+		accel_z = (IMUdata[4] << 8) | IMUdata[5];
+
+        sprintf(buf, "%d", accel_z);
+        strcat(c, buf);
+        buf[0] = '\0';
+        strcat(c, ",");
+
+		temperature = (IMUdata[6] << 8) | IMUdata[7];
+ 
+        sprintf(buf, "%d", temperature);
+        strcat(c, buf);
+        buf[0] = '\0';
+        strcat(c, ",");
+
+		gyro_x = (IMUdata[8] << 8) |  IMUdata[9];
+
+        sprintf(buf, "%d", gyro_x);
+        strcat(c, buf);
+        buf[0] = '\0';
+        strcat(c, ",");
+		gyro_y = (IMUdata[10] << 8) | IMUdata[11];
+
+        sprintf(buf, "%d", gyro_y);
+        strcat(c, buf);
+        buf[0] = '\0';
+        strcat(c, ",");
+
+		gyro_z = (IMUdata[12] << 8) | IMUdata[13];
+        
+        sprintf(buf, "%d", gyro_z);
+        strcat(c, buf);
+        buf[0] = '\0';
+               
         strcat(c, "\n");
         strcat(message, c);
         
@@ -525,8 +685,7 @@ void transmit_task(void * params){
             
             if (bConnectionflag == true){     
                 uint8_t * u = (uint8_t *)message;
-                esp_spp_write(uart_rx_task_params.handle, strlen(message), u);  
-                
+                esp_spp_write(uart_rx_task_params.handle, strlen(message), u);    
             }
             memset(message, 0, sizeof message);     //clear message - assign 0 to every byte
         }
@@ -543,6 +702,19 @@ void app_main(void){
     vTaskDelay(1000 / portTICK_PERIOD_MS);
 
     startClassicBtSpp();
+
+    ESP_LOGI(tag, ">> mpu6050");
+	i2c_config_t conf = {0};
+	conf.mode = I2C_MODE_MASTER;
+	conf.sda_io_num = PIN_SDA;
+	conf.scl_io_num = PIN_CLK;
+	conf.sda_pullup_en = GPIO_PULLUP_ENABLE;
+	conf.scl_pullup_en = GPIO_PULLUP_ENABLE;
+	conf.master.clk_speed = 400000;
+	ESP_ERROR_CHECK(i2c_param_config(I2C_NUM_0, &conf)); //I2C_NUM_0 IS THE PORT (1 OF 2?), CONF IS OBVI POINTER TO CONFIG STRUCTURE
+	ESP_ERROR_CHECK(i2c_driver_install(I2C_NUM_0, I2C_MODE_MASTER, 0, 0, 0)); //PORT, SLAVE/MASTER MODE, SOME SLAVE BUFFER STUFF THAT'S IGNORED AS MASTER REGARDLESS (X2), AND LAST IS A # OF INTERRUPT FLAGS
+    ESP_LOGI(SPP_TAG, "I2C Configured\n");
+
     xTaskCreate(&transmit_task, "transmit data", 4048, "transmit_task", 2, NULL);
 
     ESP_LOGI(SPP_TAG, "void app_main(void) - End\n");
